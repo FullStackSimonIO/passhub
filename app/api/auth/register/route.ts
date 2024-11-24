@@ -21,19 +21,22 @@ export async function POST(req: Request) {
     const body = await req.json();
     const validateData = registerPayloadSchema.parse(body);
 
-    const token = `generated-token-for-${validateData.email}`; // ! Hier sollte ein JWT-Token generiert werden
+    const token = `generated-token-for-${validateData.email}`;
 
     const response = { token };
+    console.log("Successful response:", response); // Logge die Antwort
     return NextResponse.json(registerResponseSchema.parse(response), {
       status: 200,
     });
   } catch (error) {
-    // Check if ZOD validation error
     if (error instanceof z.ZodError) {
+      console.error("Validation error:", error.errors); // Logge Validierungsfehler
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
+    console.error("Unhandled error:", error); // Logge andere Fehler
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-
-  // Casual error
-  return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
 }

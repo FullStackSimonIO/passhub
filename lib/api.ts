@@ -17,7 +17,6 @@ export const fetchHealthStatus = async (): Promise<HealthResponse> => {
 export const registerUser = async (payload: RegisterPayload) => {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  // Send Request
   const response = await fetch(`${backendUrl}/api/auth/register`, {
     method: "POST",
     headers: {
@@ -26,11 +25,16 @@ export const registerUser = async (payload: RegisterPayload) => {
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || "Failed to register user");
+  // Prüfe, ob die Antwort leer ist
+  const responseText = await response.text();
+  if (!responseText) {
+    throw new Error(`Empty response from server. Status: ${response.status}`);
   }
 
-  const data = await response.json();
-  return registerResponseSchema.parse(data);
+  try {
+    const data = JSON.parse(responseText);
+    return registerResponseSchema.parse(data);
+  } catch {
+    throw new Error("Failed to parse JSON response");
+  }
 };
