@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import React from "react";
-import { RegisterForm } from "../app/components/RegisterForm";
+import { RegisterForm } from "./RegisterForm";
 
 const RegisterCard = () => {
   return (
