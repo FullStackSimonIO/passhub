@@ -1,9 +1,5 @@
 import { healthResponseSchema, HealthResponse } from "@/types/health";
-import {
-  RegisterPayload,
-  registerPayloadSchema,
-  registerResponseSchema,
-} from "@/types/auth";
+import { RegisterPayload, registerResponseSchema } from "@/types/auth";
 
 // API Abruflogik
 export const fetchHealthStatus = async (): Promise<HealthResponse> => {
