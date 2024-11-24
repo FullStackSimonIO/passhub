@@ -24,16 +24,16 @@ export async function POST(req: Request) {
     const token = `generated-token-for-${validateData.email}`; // ! Hier sollte ein JWT-Token generiert werden
 
     const response = { token };
-    return (
-      NextResponse.json(registerResponseSchema.parse(response)), { status: 200 }
-    );
+    return NextResponse.json(registerResponseSchema.parse(response), {
+      status: 200,
+    });
   } catch (error) {
-    // check if ZOD validation error
+    // Check if ZOD validation error
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
   }
 
-  // casual error
+  // Casual error
   return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
 }
