@@ -1,9 +1,8 @@
-// app/register/page.tsx
 "use client";
 
-import { registerUser } from "@/lib/api";
-import { RegisterPayload } from "@/types/auth";
 import { useState } from "react";
+import { registerUser } from "@/lib/api";
+import { generateMasterKey, generateMasterPasswordHash } from "@/lib/crypto";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -16,13 +15,25 @@ export default function RegisterPage() {
     setLoading(true);
     setMessage(null);
 
-    const payload: RegisterPayload = {
-      email,
-      password_hash: password,
-    };
-
     try {
+      // Schritt 1: Master Key generieren
+      const masterKey = await generateMasterKey(email, password);
+
+      // Schritt 2: Master Password Hash generieren
+      const masterPasswordHash = await generateMasterPasswordHash(
+        masterKey,
+        password
+      );
+
+      // Schritt 3: API-Payload erstellen
+      const payload = {
+        email, // Die E-Mail-Adresse des Nutzers
+        password_hash: masterPasswordHash, // Der berechnete Hash
+      };
+
+      // Schritt 4: API-Aufruf zur Registrierung
       const response = await registerUser(payload);
+
       setMessage(`User registered successfully! Token: ${response.token}`);
     } catch (error: unknown) {
       if (error instanceof Error) {
