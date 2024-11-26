@@ -18,21 +18,25 @@ export default function RegisterPage() {
     try {
       // Schritt 1: Master Key generieren
       const masterKey = await generateMasterKey(email, password);
+      console.log("Master Key:", masterKey);
 
       // Schritt 2: Master Password Hash generieren
       const masterPasswordHash = await generateMasterPasswordHash(
         masterKey,
         password
       );
+      console.log("Master Password Hash:", masterPasswordHash);
 
       // Schritt 3: API-Payload erstellen
       const payload = {
         email, // Die E-Mail-Adresse des Nutzers
         password_hash: masterPasswordHash, // Der berechnete Hash
       };
+      console.log("API Payload:", payload);
 
       // Schritt 4: API-Aufruf zur Registrierung
       const response = await registerUser(payload);
+      console.log("API Response:", response);
 
       setMessage(`User registered successfully! Token: ${response.token}`);
     } catch (error: unknown) {

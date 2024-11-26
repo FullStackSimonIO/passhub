@@ -18,9 +18,6 @@ export const fetchHealthStatus = async (): Promise<HealthResponse> => {
 export const registerUser = async (payload: RegisterPayload) => {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  console.log("Backend URL:", backendUrl); // 1. Log Backend URL
-  console.log("Payload for registration:", payload); // 2. Log Payload: Object { email, password_hash }
-
   try {
     const response = await fetch(`${backendUrl}/api/v1/auth/register`, {
       method: "POST",
@@ -34,14 +31,12 @@ export const registerUser = async (payload: RegisterPayload) => {
     console.log("Response ok:", response.ok);
 
     const responseText = await response.text();
-    console.log("Response text:", responseText);
 
     if (!responseText) {
       throw new Error(`Empty response from server. Status: ${response.status}`);
     }
 
     const data = JSON.parse(responseText);
-    console.log("Parsed response data:", data);
 
     return registerResponseSchema.parse(data);
   } catch (error) {
