@@ -35,11 +35,11 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error("Validation error details:", error.errors);
+      console.log("Validation error details:", error.errors);
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
 
-    console.error("Unhandled server error:", error);
+    console.log("Unhandled server error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
