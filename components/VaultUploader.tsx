@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { encryptData } from "@/lib/crypto"; // Deine Verschlüsselungslogik
-import { updateVault } from "@/lib/api"; // POST-Request-Funktion
+import { encryptData } from "@/lib/crypto";
+import { updateVault } from "@/lib/api";
+import { Loader2, Lock, User, Key, FileText } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function VaultUploader() {
   const [name, setName] = useState("");
@@ -34,9 +48,7 @@ export default function VaultUploader() {
       console.log("JWT token found:", jwtToken);
 
       const vaultData = {
-        items: [
-          { id: Date.now().toString(), name, username, password }, // Neue Daten
-        ],
+        items: [{ id: Date.now().toString(), name, username, password }],
       };
 
       console.log("Vault data to encrypt:", vaultData);
@@ -63,32 +75,90 @@ export default function VaultUploader() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>Name</label>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />
-      <label>Username</label>
-      <input
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        required
-      />
-      <label>Password</label>
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <button type="submit" disabled={loading}>
-        {loading ? "Encrypting and Sending..." : "Add to Vault"}
-      </button>
-      {message && <p>{message}</p>}
-    </form>
+    <Card className="w-full max-w-md mx-auto mt-8">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold flex items-center">
+          <Lock className="mr-2" /> Add to Vault
+        </CardTitle>
+        <CardDescription>
+          Enter the details of the item you want to add to your vault.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <div className="relative">
+              <FileText className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="Enter item name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="pl-8"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <div className="relative">
+              <User className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="username"
+                type="text"
+                placeholder="Enter username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pl-8"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Key className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-8"
+                required
+              />
+            </div>
+          </div>
+          <Button className="w-full" type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Encrypting and Sending...
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-4 w-4" />
+                Add to Vault
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter>
+        {message && (
+          <Alert
+            variant={message.includes("Error") ? "destructive" : "default"}
+            className="w-full"
+          >
+            <AlertTitle>
+              {message.includes("Error") ? "Error" : "Success"}
+            </AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
+          </Alert>
+        )}
+      </CardFooter>
+    </Card>
   );
 }
