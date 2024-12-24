@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
+import { generateMasterKey, generateStretchedMasterKey } from "@/lib/crypto";
 
 type CardProps = React.ComponentProps<typeof Card>;
 
@@ -36,15 +37,29 @@ export function LoginCard({ className, ...props }: CardProps) {
     try {
       console.log("Attempting login for:", email);
 
+      // Login durchführen
       const token = await loginUser(email, password);
+      if (!token) throw new Error("No token received from login");
 
       console.log("Login successful, token received:", token);
-      localStorage.setItem("token", token);
+
+      // Master Key generieren
+      const masterKey = await generateMasterKey(email, password);
+      console.log("Generated Master Key:", masterKey);
+
+      // Stretched Master Key ableiten
+      const stretchedMasterKey = await generateStretchedMasterKey(masterKey);
+      console.log("Generated Stretched Master Key:", stretchedMasterKey);
+
+      // Speichere den Stretched Master Key in sessionStorage
+      sessionStorage.setItem("stretchedMasterKey", stretchedMasterKey);
+      console.log("Stretched Master Key stored in sessionStorage.");
+
+      // Speichere den Token im Cookie
+      document.cookie = `token=${token}; path=/; secure`;
 
       setMessage("Login successful!");
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
+      router.push("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
       setMessage("Login failed. Please check your credentials.");

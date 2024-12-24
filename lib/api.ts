@@ -46,6 +46,7 @@ export const registerUser = async (payload: RegisterPayload) => {
   }
 };
 
+// ! Login
 export const loginUser = async (email: string, password: string) => {
   try {
     console.log("Starting login process for email:", email);
@@ -93,3 +94,33 @@ export const loginUser = async (email: string, password: string) => {
     throw error;
   }
 };
+
+// ! update vault
+export async function updateVault(jwtToken: string, encryptedVault: string) {
+  try {
+    console.log("Starting POST request to update vault...");
+
+    const response = await fetch(`${backendUrl}/api/v1/sync/update`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ encrypted_data: encryptedVault }),
+    });
+
+    console.log("Request sent. Status:", response.status);
+
+    const responseText = await response.text(); // Text, falls JSON fehlt
+    console.log("Response text:", responseText);
+
+    if (!response.ok) {
+      throw new Error(`Error updating vault: ${response.status}`);
+    }
+
+    console.log("Vault updated successfully");
+  } catch (error) {
+    console.error("Error during vault update:", error);
+    throw error;
+  }
+}
