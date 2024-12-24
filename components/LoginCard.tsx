@@ -54,64 +54,66 @@ export function LoginCard({ className, ...props }: CardProps) {
   };
 
   return (
-    <Card className={cn("w-[380px]", className)} {...props}>
-      <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>
-          Enter your credentials to access your account.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button className="w-full" type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Logging in
-              </>
-            ) : (
-              <>
-                <LogIn className="mr-2 h-4 w-4" />
-                Login
-              </>
-            )}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter>
-        {message && (
-          <Alert
-            variant={message.includes("failed") ? "destructive" : "default"}
-          >
-            <AlertTitle>
-              {message.includes("failed") ? "Error" : "Success"}
-            </AlertTitle>
-            <AlertDescription>{message}</AlertDescription>
-          </Alert>
-        )}
-      </CardFooter>
-    </Card>
+    <section className="flex justify-center items-center h-screen">
+      <Card className={cn("w-[380px]", className)} {...props}>
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button className="w-full" type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging in
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </>
+              )}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter>
+          {message && (
+            <Alert
+              variant={message.includes("failed") ? "destructive" : "default"}
+            >
+              <AlertTitle>
+                {message.includes("failed") ? "Error" : "Success"}
+              </AlertTitle>
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          )}
+        </CardFooter>
+      </Card>
+    </section>
   );
 }
