@@ -2,11 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { decryptData } from "@/lib/crypto";
+import { Loader2, Lock, User, Key } from "lucide-react";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface VaultItem {
+  id: string;
+  name: string;
+  username: string;
+  password: string;
+}
 
 export default function VaultFetcher() {
-  const [decryptedVault, setDecryptedVault] = useState<
-    { id: string; name: string; username: string; password: string }[] | null
-  >(null);
+  const [decryptedVault, setDecryptedVault] = useState<VaultItem[] | null>(
+    null
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +37,6 @@ export default function VaultFetcher() {
         setLoading(true);
         setError(null);
 
-        // 1. Lese den JWT-Token
         const cookies = document.cookie.split("; ").reduce(
           (acc, cookie) => {
             const [name, value] = cookie.split("=");
@@ -31,7 +51,6 @@ export default function VaultFetcher() {
           throw new Error("JWT token not found in cookies");
         }
 
-        // 2. Fetch-Request an den Server
         const response = await fetch(
           "https://backend-rspass.let-net.cc/api/v1/sync/fetch",
           {
@@ -50,7 +69,6 @@ export default function VaultFetcher() {
           throw new Error("Invalid encrypted data format");
         }
 
-        // 3. Entschlüsselung
         const stretchedMasterKey = sessionStorage.getItem("stretchedMasterKey");
         if (!stretchedMasterKey) {
           throw new Error("Stretched Master Key not found in sessionStorage");
@@ -63,9 +81,8 @@ export default function VaultFetcher() {
 
         console.log("Decrypted vault data:", decryptedData);
 
-        // 4. Parsen und alle Einträge speichern
         const parsedVault = JSON.parse(decryptedData);
-        setDecryptedVault(parsedVault.items || []); // Stelle sicher, dass ein Array gespeichert wird
+        setDecryptedVault(parsedVault.items || []);
       } catch (err) {
         console.error("Error fetching or decrypting vault:", err);
         setError(err instanceof Error ? err.message : "Unknown error occurred");
@@ -77,35 +94,80 @@ export default function VaultFetcher() {
     fetchAndDecryptVault();
   }, []);
 
-  // 5. Render-Logik
-  if (loading) return <p>Loading vault data...</p>;
-  if (error) return <p className="text-red-500">Error: {error}</p>;
+  if (loading) {
+    return (
+      <Card className="w-full max-w-3xl mx-auto mt-8">
+        <CardContent className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-lg font-medium">
+            Loading vault data...
+          </span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="w-full max-w-3xl mx-auto mt-8">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
-    <section className="flex flex-col items-center justify-center w-full h-screen">
-      <h1 className="text-xl font-bold mb-4">Decrypted Vault</h1>
-      {decryptedVault && decryptedVault.length > 0 ? (
-        <div className="w-3/4">
-          {decryptedVault.map((item) => (
-            <div
-              key={item.id}
-              className="p-4 border rounded-lg shadow mb-4 bg-gray-50"
-            >
-              <p>
-                <strong>Name:</strong> {item.name}
-              </p>
-              <p>
-                <strong>Username:</strong> {item.username}
-              </p>
-              <p>
-                <strong>Password:</strong> {item.password}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p>No vault entries found.</p>
-      )}
-    </section>
+    <Card className="w-full max-w-3xl mx-auto mt-8">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold flex items-center">
+          <Lock className="mr-2" /> Decrypted Vault
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {decryptedVault && decryptedVault.length > 0 ? (
+          <ScrollArea className="h-[calc(100vh-16rem)] w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Password</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {decryptedVault.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center w-fit"
+                      >
+                        <User className="h-3 w-3 mr-1" />
+                        {item.username}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className="flex items-center w-fit"
+                      >
+                        <Key className="h-3 w-3 mr-1" />
+                        {item.password}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        ) : (
+          <Alert>
+            <AlertTitle>No entries found</AlertTitle>
+            <AlertDescription>Your vault is currently empty.</AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+    </Card>
   );
 }
