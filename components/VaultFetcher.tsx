@@ -31,39 +31,63 @@ export default function VaultFetcher() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Wrapper-Funktion für API-Aufrufe mit Authentifizierung
+  const fetchWithAuth = async (url: string) => {
+    try {
+      const jwtToken = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="))
+        ?.split("=")[1];
+
+      if (!jwtToken) {
+        throw new Error("JWT token not found in cookies");
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 401) {
+        // Token ungültig oder abgelaufen, Benutzer ausloggen
+        console.error("Unauthorized! Redirecting to login...");
+        document.cookie = "token=; Max-Age=0; path=/"; // JWT-Token löschen
+        window.location.href = "/login"; // Zur Login-Seite weiterleiten
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error in fetchWithAuth:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const fetchAndDecryptVault = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const cookies = document.cookie.split("; ").reduce(
-          (acc, cookie) => {
-            const [name, value] = cookie.split("=");
-            acc[name] = value;
-            return acc;
-          },
-          {} as Record<string, string>
+        const data = await fetchWithAuth(
+          "https://backend-rspass.let-net.cc/api/v1/sync/fetch"
         );
 
-        const jwtToken = cookies["token"];
-        if (!jwtToken) {
-          throw new Error("JWT token not found in cookies");
+        if (!data || !data.encrypted_data) {
+          throw new Error("Invalid data received from API");
         }
 
-        const response = await fetch(
-          "https://backend-rspass.let-net.cc/api/v1/sync/fetch",
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${jwtToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        console.log("Fetched data:", data);
 
-        const data = await response.json();
         const encryptedData = JSON.parse(data.encrypted_data);
+        console.log("Encrypted Data:", encryptedData);
 
         if (!encryptedData.iv || !encryptedData.data) {
           throw new Error("Invalid encrypted data format");
@@ -79,10 +103,16 @@ export default function VaultFetcher() {
           stretchedMasterKey
         );
 
-        console.log("Decrypted vault data:", decryptedData);
+        console.log("Decrypted Data:", decryptedData);
 
         const parsedVault = JSON.parse(decryptedData);
-        setDecryptedVault(parsedVault.items || []);
+        console.log("Parsed Vault:", parsedVault);
+
+        if (!Array.isArray(parsedVault)) {
+          throw new Error("Decrypted vault data is not an array");
+        }
+
+        setDecryptedVault(parsedVault);
       } catch (err) {
         console.error("Error fetching or decrypting vault:", err);
         setError(err instanceof Error ? err.message : "Unknown error occurred");

@@ -1,3 +1,10 @@
+export type VaultItem = {
+  id: string;
+  name: string;
+  username: string;
+  password: string;
+};
+
 // * Generate Master Key
 export async function generateMasterKey(
   email: string,
@@ -111,6 +118,8 @@ export async function generateMasterPasswordHash(
   // Gib den Master Password Hash als Base64-String zurück
   return btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
 }
+
+// * Encrypt Data
 export async function encryptData(
   data: string,
   stretchedMasterKey: string
@@ -127,13 +136,14 @@ export async function encryptData(
     ["encrypt"]
   );
 
-  // 3. Daten verschlüsseln
+  //  3. Daten verschlüsseln
   const encoder = new TextEncoder();
   const encryptedData = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
     encoder.encode(data)
   );
+  console.log("Encrypted Vault Data:", encryptedData); // ! DEBUG STATEMENT
 
   // 4. Ergebnis serialisieren (Base64-kodierte Daten und IV)
   return JSON.stringify({
@@ -142,29 +152,21 @@ export async function encryptData(
   });
 }
 
+// * Decrypt Data
 export async function decryptData(
   encryptedData: string,
   stretchedMasterKey: string
 ): Promise<string> {
   console.log("Decrypting data...");
   const { iv, data } = JSON.parse(encryptedData);
-
-  console.log("IV (Base64):", iv);
-  console.log("Encrypted Data (Base64):", data);
-
   // Base64-Dekodierung
   const ivBuffer = Uint8Array.from(atob(iv), (c) => c.charCodeAt(0));
   const encryptedBuffer = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
-
-  console.log("IV (Uint8Array):", ivBuffer);
-  console.log("Encrypted Data (Uint8Array):", encryptedBuffer);
 
   // Stretched Master Key dekodieren
   const keyBuffer = Uint8Array.from(atob(stretchedMasterKey), (c) =>
     c.charCodeAt(0)
   );
-
-  console.log("Key Buffer:", keyBuffer);
 
   // Importiere den Schlüssel für die Entschlüsselung
   const key = await crypto.subtle.importKey(
@@ -175,8 +177,6 @@ export async function decryptData(
     ["decrypt"]
   );
 
-  console.log("Imported Key for Decryption:", key);
-
   // Entschlüsselung
   try {
     const decryptedBuffer = await crypto.subtle.decrypt(
@@ -186,7 +186,8 @@ export async function decryptData(
     );
 
     const decryptedText = new TextDecoder().decode(decryptedBuffer);
-    console.log("Decrypted Text:", decryptedText);
+    // console.log("Decrypted Vault Data (raw):", encryptedData); // ! DEBUG STATEMENT
+    // console.log("Decrypted Vault JSON:", decryptedText); // ! DEBUG STATEMENT
 
     return decryptedText;
   } catch (error) {
@@ -221,11 +222,69 @@ export async function decryptVault(
 ): Promise<object> {
   // 1. Generiere den Stretched Master Key
   const stretchedKey = await generateStretchedMasterKey(masterKey);
-  console.log("Stretched Master Key:", stretchedKey);
+  // console.log("Stretched Master Key:", stretchedKey); // ! DEBUG STATEMENT
 
   // 2. Entschlüssele die Vault-Daten
   const decryptedVault = await decryptData(encryptedVault, stretchedKey);
-  console.log("Decrypted Vault:", decryptedVault);
+  console.log("Decrypted Vault:", decryptedVault); // ! DEBUG STATEMENT
 
   return JSON.parse(decryptedVault);
+}
+
+export async function updateVault(
+  newItem: VaultItem,
+  masterKey: string,
+  fetchUrl: string,
+  updateUrl: string,
+  jwtToken: string
+): Promise<void> {
+  try {
+    // Fetch bestehende verschlüsselte Daten
+    const fetchResponse = await fetch(fetchUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const fetchData = await fetchResponse.json();
+
+    // Entschlüssele bestehende Vault-Daten
+    const encryptedData = JSON.parse(fetchData.encrypted_data);
+    const stretchedMasterKey = await generateStretchedMasterKey(masterKey);
+
+    const existingDecryptedData = encryptedData.iv
+      ? await decryptData(JSON.stringify(encryptedData), stretchedMasterKey)
+      : "[]"; // Wenn kein Vault existiert, leeres Array verwenden
+
+    const existingVault = JSON.parse(existingDecryptedData);
+
+    // Füge den neuen Eintrag hinzu
+    const updatedVault = [...existingVault, newItem];
+
+    // Verschlüssele den aktualisierten Vault
+    const encryptedVault = await encryptData(
+      JSON.stringify(updatedVault),
+      stretchedMasterKey
+    );
+
+    // Update-Request an den Server senden
+    const updateResponse = await fetch(updateUrl, {
+      method: "POST", // oder "PUT", je nach API
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ encrypted_data: encryptedVault }),
+    });
+
+    if (!updateResponse.ok) {
+      throw new Error("Failed to update vault");
+    }
+
+    console.log("Vault successfully updated!");
+  } catch (error) {
+    console.error("Error updating vault:", error);
+  }
 }

@@ -1,38 +1,53 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(req) {
-  // Token aus den Cookies abrufen
-  const tokenObj = req.cookies.get("token"); // Liefert ein Objekt mit { name, value }
-  const token = tokenObj?.value || null; // Greife auf die `value`-Eigenschaft zu
+export async function middleware(req: NextRequest) {
+  const tokenObj = req.cookies.get("token");
+  const token = tokenObj?.value || null;
 
-  console.log("Retrieved token from cookies:", token);
-
-  // Prüfen, ob Token vorhanden ist
-  if (!token || typeof token !== "string") {
-    console.error("No valid token found or token is not a string:", token);
+  if (!token) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Token verifizieren
   try {
-    const payload = JSON.parse(atob(token.split(".")[1])); // JWT Payload dekodieren
-    console.log("Token Payload:", payload);
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const isExpired = payload.exp * 1000 < Date.now();
 
-    const isExpired = payload.exp * 1000 < Date.now(); // Ablaufzeit prüfen
     if (isExpired) {
-      console.error("Token expired");
-      return NextResponse.redirect(new URL("/login", req.url));
+      console.log("Token expired. Attempting to refresh...");
+
+      const refreshToken = req.cookies.get("refresh_token")?.value;
+      if (!refreshToken) {
+        console.error("No refresh token found.");
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
+
+      const refreshResponse = await fetch(
+        "https://backend.example.com/api/refresh",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        }
+      );
+
+      if (!refreshResponse.ok) {
+        console.error("Failed to refresh token.");
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
+
+      const { token: newToken } = await refreshResponse.json();
+      const response = NextResponse.next();
+
+      response.cookies.set("token", newToken, { httpOnly: true });
+      console.log("Token refreshed successfully.");
+      return response;
     }
+
+    console.log("Token is valid.");
   } catch (error) {
-    console.error("Invalid token:", error);
+    console.error("Error verifying or refreshing token:", error);
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Weiterleitung zulassen
   return NextResponse.next();
 }
-
-// Konfiguration der Middleware
-export const config = {
-  matcher: ["/dashboard/:path*", "/protected/:path*"],
-};

@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { encryptData } from "@/lib/crypto";
-import { updateVault } from "@/lib/api";
+import { decryptData, encryptData } from "@/lib/crypto";
 import { Loader2, Lock, User, Key, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,46 +30,129 @@ export default function VaultUploader() {
     setMessage(null);
 
     try {
-      console.log("Fetching stretchedMasterKey from sessionStorage...");
-      const stretchedMasterKey = sessionStorage.getItem("stretchedMasterKey");
-      if (!stretchedMasterKey)
-        throw new Error("Stretched Master Key not found");
+      console.log("Starting the submit process...");
 
+      // Abrufen des Stretched Master Key
+      const stretchedMasterKey = sessionStorage.getItem("stretchedMasterKey");
+      if (!stretchedMasterKey) {
+        throw new Error("Stretched Master Key not found in sessionStorage");
+      }
       console.log("Stretched Master Key loaded:", stretchedMasterKey);
 
+      // Abrufen des JWT-Tokens
       const jwtToken = document.cookie
         .split("; ")
         .find((row) => row.startsWith("token="))
         ?.split("=")[1];
-
-      if (!jwtToken) throw new Error("JWT token not found in cookies");
-
+      if (!jwtToken) {
+        throw new Error("JWT token not found in cookies");
+      }
       console.log("JWT token found:", jwtToken);
 
-      const vaultData = {
-        items: [{ id: Date.now().toString(), name, username, password }],
+      // Fetch bestehende Vault-Daten
+      const fetchUrl = "https://backend-rspass.let-net.cc/api/v1/sync/fetch";
+      console.log("Fetching existing vault data from:", fetchUrl);
+      const fetchResponse = await fetch(fetchUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!fetchResponse.ok) {
+        console.error(
+          "Failed to fetch existing vault data:",
+          fetchResponse.status
+        );
+        throw new Error("Error fetching existing vault data");
+      }
+
+      const fetchData = await fetchResponse.json();
+      console.log("Fetched encrypted vault data:", fetchData);
+
+      // Entschlüsseln der bestehenden Vault-Daten
+      const encryptedData = JSON.parse(fetchData.encrypted_data || "{}");
+      let existingVault = [];
+
+      if (encryptedData.iv) {
+        try {
+          console.log("Decrypting existing vault data...");
+          const existingDecryptedData = await decryptData(
+            JSON.stringify(encryptedData),
+            stretchedMasterKey
+          );
+          console.log(
+            "Decrypted existing vault data (raw):",
+            existingDecryptedData
+          );
+
+          existingVault = JSON.parse(existingDecryptedData);
+          console.log("Parsed existing vault:", existingVault);
+
+          if (!Array.isArray(existingVault)) {
+            throw new Error("Decrypted vault is not an array");
+          }
+        } catch (error) {
+          console.error("Error decrypting or parsing vault data:", error);
+          throw new Error("Failed to decrypt or parse existing vault data");
+        }
+      } else {
+        console.log(
+          "No existing encrypted data found. Initializing empty vault..."
+        );
+        existingVault = [];
+      }
+
+      // Neues Item hinzufügen
+      const newItem = {
+        id: Date.now().toString(),
+        name,
+        username,
+        password,
       };
+      console.log("New item to add:", newItem);
 
-      console.log("Vault data to encrypt:", vaultData);
+      const updatedVault = [...existingVault, newItem];
+      console.log("Updated vault items:", updatedVault);
 
+      // Verschlüsselung der aktualisierten Vault-Daten
       const encryptedVault = await encryptData(
-        JSON.stringify(vaultData),
+        JSON.stringify(updatedVault),
         stretchedMasterKey
       );
+      console.log("Encrypted updated vault data:", encryptedVault);
 
-      console.log("Encrypted Vault Data:", encryptedVault);
+      // Aktualisierte Daten an den Server senden
+      const updateUrl = "https://backend-rspass.let-net.cc/api/v1/sync/update";
+      console.log("Sending updated vault data to:", updateUrl);
+      const updateResponse = await fetch(updateUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${jwtToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ encrypted_data: encryptedVault }),
+      });
 
-      await updateVault(jwtToken, encryptedVault);
+      if (!updateResponse.ok) {
+        console.error("Failed to update vault:", updateResponse.status);
+        throw new Error("Error updating vault");
+      }
 
+      console.log("Vault successfully updated!");
       setMessage("Vault updated successfully!");
       setName("");
       setUsername("");
       setPassword("");
     } catch (error) {
-      console.error("Error updating vault:", error);
-      setMessage("Error: Failed to update vault.");
+      console.error("Error during submit process:", error);
+      setMessage(
+        `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     } finally {
       setLoading(false);
+      console.log("Submit process completed.");
     }
   };
 

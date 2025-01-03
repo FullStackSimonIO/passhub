@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { Button, useMediaQuery } from "@relume_io/relume-ui";
 import type { ButtonProps } from "@relume_io/relume-ui";
-import { RxChevronRight } from "react-icons/rx";
 import {
   MotionStyle,
   MotionValue,
@@ -50,7 +49,7 @@ export const LandingFeatures = (props: Layout415Props) => {
   });
 
   return (
-    <section ref={containerRef} className="px-[5%]">
+    <section ref={containerRef} className="section px-[5%]">
       <div className="container">
         <div className="relative h-[300svh] lg:h-[300vh]">
           <div className="static grid h-full grid-cols-1 content-start items-center gap-x-20 gap-y-16 py-16 md:sticky md:top-0 md:h-svh md:grid-cols-2 md:content-normal md:py-0 lg:h-screen">
@@ -65,7 +64,7 @@ export const LandingFeatures = (props: Layout415Props) => {
               <div className="mt-6 flex flex-wrap items-center gap-4 md:mt-8">
                 {buttons.map((button, index) => (
                   <Button key={index} {...button}>
-                    {button.title}
+                    <a href="/register">{button.title}</a>
                   </Button>
                 ))}
               </div>
@@ -151,15 +150,13 @@ const FeatureSection = ({
 
 export const Layout415Defaults: Props = {
   tagline: "Features",
-  heading: `The only <span className='text-red-500'>Password Manager</span> you'll ever need`,
+  heading: `The only <span class='text-foreground'>Password Manager</span> you'll ever need`,
   description: "",
   buttons: [
-    { title: "Button", variant: "secondary" },
     {
-      title: "Button",
-      variant: "link",
-      size: "link",
-      iconRight: <RxChevronRight />,
+      title: "Register Now",
+      variant: "secondary",
+      className: "rounded-lg bg-foreground border-white text-white",
     },
   ],
   featureSections: [

@@ -1,6 +1,11 @@
 import { healthResponseSchema, HealthResponse } from "@/types/health";
 import { RegisterPayload, registerResponseSchema } from "@/types/auth";
-import { generateMasterKey, generateMasterPasswordHash } from "@/lib/crypto";
+import {
+  generateMasterKey,
+  generateMasterPasswordHash,
+  updateVault,
+  VaultItem,
+} from "@/lib/crypto";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -96,31 +101,66 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 // ! update vault
-export async function updateVault(jwtToken: string, encryptedVault: string) {
-  try {
-    console.log("Starting POST request to update vault...");
 
-    const response = await fetch(`${backendUrl}/api/v1/sync/update`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${jwtToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ encrypted_data: encryptedVault }),
-    });
+export async function handleAddNewItem(newItem: VaultItem) {
+  const masterKey = sessionStorage.getItem("masterKey");
+  const jwtToken = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith("token="))
+    ?.split("=")[1];
 
-    console.log("Request sent. Status:", response.status);
-
-    const responseText = await response.text(); // Text, falls JSON fehlt
-    console.log("Response text:", responseText);
-
-    if (!response.ok) {
-      throw new Error(`Error updating vault: ${response.status}`);
-    }
-
-    console.log("Vault updated successfully");
-  } catch (error) {
-    console.error("Error during vault update:", error);
-    throw error;
+  if (!jwtToken) {
+    console.error("JWT token not found in cookies");
+    return;
   }
+
+  if (!masterKey || !jwtToken) {
+    console.error("Missing authentication data");
+    return;
+  }
+
+  const fetchUrl = "https://backend-rspass.let-net.cc/api/v1/sync/fetch";
+  const updateUrl = "https://backend-rspass.let-net.cc/api/v1/sync/update";
+
+  await updateVault(newItem, masterKey, fetchUrl, updateUrl, jwtToken);
+}
+
+export async function fetchWithAuth(
+  url: string,
+  options: { headers?: HeadersInit } = {}
+) {
+  const jwtToken = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("token="))
+    ?.split("=")[1];
+
+  if (!jwtToken) {
+    console.error("JWT token not found in cookies");
+    // Optional: Benutzer automatisch zur Login-Seite leiten
+    logout();
+    return null;
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${jwtToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (response.status === 401) {
+    console.error("Unauthorized! Redirecting to login...");
+    logout();
+    return null;
+  }
+
+  return response.json();
+}
+
+// * Logout with Cookie
+export function logout() {
+  document.cookie = "token=; Max-Age=0; path=/"; // JWT-Token löschen
+  window.location.href = "/login"; // Zur Login-Seite weiterleiten
 }
