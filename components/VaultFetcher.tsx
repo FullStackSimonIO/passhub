@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { decryptData } from "@/lib/crypto";
+
 import { Loader2, Lock, User, Key } from "lucide-react";
 
 import {
@@ -16,13 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-interface VaultItem {
-  id: string;
-  name: string;
-  username: string;
-  password: string;
-}
+import { VaultItem, VaultItemSchema } from "@/types/vaultItem";
 
 export default function VaultFetcher() {
   const [decryptedVault, setDecryptedVault] = useState<VaultItem[] | null>(
@@ -31,7 +26,7 @@ export default function VaultFetcher() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Wrapper-Funktion für API-Aufrufe mit Authentifizierung
+  // Helper function for authenticated API requests
   const fetchWithAuth = async (url: string) => {
     try {
       const jwtToken = document.cookie
@@ -52,10 +47,8 @@ export default function VaultFetcher() {
       });
 
       if (response.status === 401) {
-        // Token ungültig oder abgelaufen, Benutzer ausloggen
-        console.error("Unauthorized! Redirecting to login...");
-        document.cookie = "token=; Max-Age=0; path=/"; // JWT-Token löschen
-        window.location.href = "/login"; // Zur Login-Seite weiterleiten
+        document.cookie = "token=; Max-Age=0; path=/"; // Delete JWT token
+        window.location.href = "/login"; // Redirect to login
         return null;
       }
 
@@ -84,10 +77,7 @@ export default function VaultFetcher() {
           throw new Error("Invalid data received from API");
         }
 
-        console.log("Fetched data:", data);
-
         const encryptedData = JSON.parse(data.encrypted_data);
-        console.log("Encrypted Data:", encryptedData);
 
         if (!encryptedData.iv || !encryptedData.data) {
           throw new Error("Invalid encrypted data format");
@@ -103,16 +93,12 @@ export default function VaultFetcher() {
           stretchedMasterKey
         );
 
-        console.log("Decrypted Data:", decryptedData);
-
         const parsedVault = JSON.parse(decryptedData);
-        console.log("Parsed Vault:", parsedVault);
 
-        if (!Array.isArray(parsedVault)) {
-          throw new Error("Decrypted vault data is not an array");
-        }
+        // Validate decrypted data with Zod
+        const validatedVault = VaultItemSchema.array().parse(parsedVault);
 
-        setDecryptedVault(parsedVault);
+        setDecryptedVault(validatedVault);
       } catch (err) {
         console.error("Error fetching or decrypting vault:", err);
         setError(err instanceof Error ? err.message : "Unknown error occurred");

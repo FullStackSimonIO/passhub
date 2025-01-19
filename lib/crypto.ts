@@ -108,7 +108,7 @@ export async function generateMasterPasswordHash(
     {
       name: "PBKDF2",
       salt,
-      iterations: 100000,
+      iterations: 300000, // ! Anzahl der Iterationen (anpassbar je nach Sicherheitsanforderung)
       hash: "SHA-256",
     },
     baseKey,

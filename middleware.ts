@@ -21,8 +21,8 @@ export function middleware(req: NextRequest) {
       console.log("Token expired, redirecting to /login");
       return NextResponse.redirect(new URL("/login", req.url));
     }
-  } catch (error: any) {
-    console.error("Invalid token, redirecting to /login");
+  } catch (error) {
+    console.log("Token is invalid, redirecting to /login");
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
