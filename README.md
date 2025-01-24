@@ -1,29 +1,40 @@
-🛡️ PassHub
-A modern, secure, and user-friendly password manager built with Next.js 15, TypeScript, and cutting-edge cryptographic practices. This project emphasizes client-side encryption, ensuring maximum security through a zero-knowledge architecture.
+# 🛡️ PassHub
 
-🌟 Features
-Client-Side Encryption: All sensitive data is encrypted and decrypted on the client, ensuring your data is never exposed to the server in plaintext.
-Advanced Cryptography:
-Key derivation using PBKDF2 and HKDF.
-Data encryption with AES-GCM, ensuring both confidentiality and integrity.
-User Authentication:
-Secure login and registration powered by JWTs.
-Middleware to protect authenticated routes.
-Responsive Design: Built with TailwindCSS for a beautiful and responsive user interface.
-Type Safety: Developed with TypeScript for reliable and predictable code.
-Data Validation: Input validation using Zod to ensure robust security against malformed or malicious input.
-Scalable Structure: Organized folder structure for easy scalability and maintenance.
-🚀 Tech Stack
-Technology	Purpose
-Next.js 15	Frontend framework with App Router support.
-TypeScript	Ensures type safety and reduces runtime errors.
-TailwindCSS	Utility-first CSS framework for responsive UI.
-Zod	Runtime validation and schema declaration.
-Web Crypto API	Native browser API for secure cryptography.
-📂 Project Structure
-plaintext
-Kopieren
-Bearbeiten
+A modern, secure, and user-friendly password manager built with **Next.js 15**, **TypeScript**, and cutting-edge cryptographic practices. This project emphasizes client-side encryption, ensuring maximum security through a zero-knowledge architecture.
+
+---
+
+## 🌟 Features
+
+- **Client-Side Encryption**: All sensitive data is encrypted and decrypted on the client, ensuring your data is never exposed to the server in plaintext.
+- **Advanced Cryptography**:
+  - Key derivation using **PBKDF2** and **HKDF**.
+  - Data encryption with **AES-GCM**, ensuring both confidentiality and integrity.
+- **User Authentication**:
+  - Secure login and registration powered by JWTs.
+  - Middleware to protect authenticated routes.
+- **Responsive Design**: Built with **TailwindCSS** for a beautiful and responsive user interface.
+- **Type Safety**: Developed with **TypeScript** for reliable and predictable code.
+- **Data Validation**: Input validation using **Zod** to ensure robust security against malformed or malicious input.
+- **Scalable Structure**: Organized folder structure for easy scalability and maintenance.
+
+---
+
+## 🚀 Tech Stack
+
+| **Technology**       | **Purpose**                                  |
+|-----------------------|----------------------------------------------|
+| **Next.js 15**        | Frontend framework with App Router support. |
+| **TypeScript**        | Ensures type safety and reduces runtime errors. |
+| **TailwindCSS**       | Utility-first CSS framework for responsive UI. |
+| **Zod**               | Runtime validation and schema declaration.  |
+| **Web Crypto API**    | Native browser API for secure cryptography. |
+
+---
+
+## 📂 Project Structure
+
+```typescript
 app/
 ├── (auth)/             # Authentication routes
 │   ├── login/page.tsx  # Login page
@@ -45,6 +56,8 @@ types/
 ├── auth.ts             # Type definitions for auth-related data
 ├── vaultItem.ts        # Type definitions for vault items
 middleware.ts           # Protects authenticated routes
+```
+
 🔐 Security Architecture
 Zero-Knowledge Encryption:
 
@@ -63,36 +76,17 @@ Input Validation:
 Zod ensures that all user input conforms to predefined schemas, preventing injection attacks and malformed data.
 🛠️ Installation and Setup
 Clone the repository:
-
-bash
-Kopieren
-Bearbeiten
 git clone https://github.com/your-username/nextjs-password-manager.git
 cd nextjs-password-manager
 Install dependencies:
-
-bash
-Kopieren
-Bearbeiten
 npm install
 Set up environment variables: Create a .env.local file and configure the following:
-
-env
-Kopieren
-Bearbeiten
 NEXT_PUBLIC_API_BASE_URL=http://your-backend-url
 JWT_SECRET=your-secret-key
 Run the development server:
-
-bash
-Kopieren
-Bearbeiten
 npm run dev
-Build for production:
 
-bash
-Kopieren
-Bearbeiten
+Build for production:
 npm run build
 npm start
 📖 Usage
@@ -126,19 +120,10 @@ Contributions are welcome! Please follow these steps:
 
 Fork the repository.
 Create a feature branch:
-bash
-Kopieren
-Bearbeiten
 git checkout -b feature-name
 Commit your changes:
-bash
-Kopieren
-Bearbeiten
 git commit -m "Add feature-name"
 Push to your branch:
-bash
-Kopieren
-Bearbeiten
 git push origin feature-name
 Open a pull request.
 📄 License
@@ -147,6 +132,7 @@ This project is licensed under the MIT License. See the LICENSE file for details
 📬 Contact
 For questions, feedback, or support, feel free to contact:
 
-Email: fullstacksimon@gmail.com
+Email: fullstacksimon@gmail.com  
 GitHub: FullStackSimonIO
 Start managing your passwords securely with this modern and robust password manager!
+
