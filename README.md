@@ -140,5 +140,6 @@ For questions, feedback, or support, feel free to contact:
 
 Email: fullstacksimon@gmail.com  
 GitHub: FullStackSimonIO
+
 Start managing your passwords securely with this modern and robust password manager!
 
