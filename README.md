@@ -58,23 +58,24 @@ types/
 middleware.ts           # Protects authenticated routes
 ```
 
-🔐 Security Architecture
+## 🔐 Security Architecture
 Zero-Knowledge Encryption:
 
 All encryption and decryption processes occur on the client side.
 The server only stores encrypted data and cannot access sensitive information.
 Key Derivation:
 
-PBKDF2 is used to derive the master key from the user’s email and password.
+**PBKDF2** is used to derive the master key from the user’s email and password.
 HKDF is applied to generate a stretched key suitable for AES-GCM encryption.
 Data Encryption:
 
-AES-GCM provides confidentiality and ensures data integrity through authentication tags.
+**AES-GCM** provides confidentiality and ensures data integrity through authentication tags.
 Each encryption operation uses a random initialization vector (IV) to prevent key reuse attacks.
 Input Validation:
 
-Zod ensures that all user input conforms to predefined schemas, preventing injection attacks and malformed data.
-🛠️ Installation and Setup
+**Zod** ensures that all user input conforms to predefined schemas, preventing injection attacks and malformed data.
+
+## 🛠️ Installation and Setup
 Clone the repository:
 git clone https://github.com/your-username/nextjs-password-manager.git
 cd nextjs-password-manager
@@ -86,50 +87,55 @@ JWT_SECRET=your-secret-key
 Run the development server:
 npm run dev
 
-Build for production:
+## Build for production:
 npm run build
 npm start
-📖 Usage
-Registering an Account
+
+## 📖 Usage
+**Registering an Account**
 Navigate to /register.
 Provide your email and create a secure password.
 Your password is used to derive a cryptographic key for vault encryption.
-Managing Your Vault
+**Managing Your Vault**
 Log in to access your dashboard.
 Add, update, or delete vault entries.
 All changes are encrypted on the client before being sent to the server.
-Logout
+**Logout**
 Logout securely by invalidating your session.
-🧑‍💻 Development Notes
+
+## 🧑‍💻 Development Notes
 API Endpoints:
 /api/auth/login - User authentication.
 /api/auth/register - User registration.
 /api/vault - Fetch and update encrypted vault data.
 Middleware: Ensures only authenticated users can access the dashboard and vault-related routes.
-🛡️ Best Practices
+
+## 🛡️ Best Practices
 Always handle sensitive operations, such as encryption, on the client side.
 Use HTTPS to secure communication between the client and server.
 Regularly update dependencies to patch potential vulnerabilities.
-📈 Future Enhancements
+
+## 📈 Future Enhancements
 Browser Extension: Integrate with browsers for autofilling credentials.
 Secure Password Generator: Add a password generator with customizable options.
 Mobile App: Extend functionality to iOS and Android platforms.
 Multi-Factor Authentication (MFA): Enhance account security with MFA.
-🤝 Contributing
+
+## 🤝 Contributing
 Contributions are welcome! Please follow these steps:
 
-Fork the repository.
-Create a feature branch:
-git checkout -b feature-name
-Commit your changes:
-git commit -m "Add feature-name"
-Push to your branch:
-git push origin feature-name
-Open a pull request.
-📄 License
+1. Fork the repository.
+2. Create a feature branch:
+3. git checkout -b feature-name
+4. Commit your changes:
+5. git commit -m "Add feature-name"
+6. Push to your branch:
+7. git push origin feature-name
+8. Open a pull request.
+## 📄 License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-📬 Contact
+## 📬 Contact
 For questions, feedback, or support, feel free to contact:
 
 Email: fullstacksimon@gmail.com  
