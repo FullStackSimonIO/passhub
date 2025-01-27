@@ -16,6 +16,8 @@
     "@relume_io/relume-tailwind": "^1.0.0",
     "@relume_io/relume-ui": "^1.0.1",
     "argon2": "^0.41.1",
+    "argon2-browser": "^1.18.0",
+    "argon2-wasm": "^0.9.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.17",
@@ -32,6 +34,7 @@
     "zod": "^3.24.0-canary.20241107T043915"
   },
   "devDependencies": {
+    "@types/argon2-browser": "^1.18.4",
     "@types/fullpage.js": "^2.9.6",
     "@types/node": "^20",
     "@types/react": "^18",

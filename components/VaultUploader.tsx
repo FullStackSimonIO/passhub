@@ -84,7 +84,7 @@ export default function VaultUploader() {
 
       // Create new item
       const newItem: VaultItem = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         name,
         username,
         password,

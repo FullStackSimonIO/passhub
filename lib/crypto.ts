@@ -6,6 +6,7 @@ export type VaultItem = {
 };
 
 // * Generate Master Key
+// * Generate Master Key
 export async function generateMasterKey(
   email: string,
   password: string
@@ -44,7 +45,7 @@ export async function generateStretchedMasterKey(
   masterKey: string
 ): Promise<string> {
   const encoder = new TextEncoder();
-  const salt = encoder.encode("bitwarden_stretching_salt"); // Optionales Salt
+  const salt = encoder.encode("passhub_stretching_salt"); // Optionales Salt
   const masterKeyBuffer = Uint8Array.from(atob(masterKey), (c) =>
     c.charCodeAt(0)
   );
@@ -64,7 +65,7 @@ export async function generateStretchedMasterKey(
       name: "HKDF",
       hash: "SHA-256",
       salt: salt,
-      info: encoder.encode("bitwarden_encryption"), // Info-String zur zusätzlichen Sicherheit
+      info: encoder.encode("passhub_encryption"), // Info-String zur zusätzlichen Sicherheit
     },
     importedKey,
     { name: "AES-GCM", length: 256 }, // Ziel: AES-256-GCM-Schlüssel

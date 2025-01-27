@@ -1,26 +1,14 @@
-import { healthResponseSchema, HealthResponse } from "@/types/health";
-import { RegisterPayload, registerResponseSchema } from "@/types/auth";
 import {
   generateMasterKey,
   generateMasterPasswordHash,
   updateVault,
   VaultItem,
 } from "@/lib/crypto";
+import { registerResponseSchema, RegisterPayload } from "@/types/auth";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 // API Abruflogik
-export const fetchHealthStatus = async (): Promise<HealthResponse> => {
-  const response = await fetch("/api/health");
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch health status");
-  }
-
-  const data = await response.json();
-
-  return healthResponseSchema.parse(data);
-};
 
 //! Registrierung
 export const registerUser = async (payload: RegisterPayload) => {
@@ -125,6 +113,7 @@ export async function handleAddNewItem(newItem: VaultItem) {
   await updateVault(newItem, masterKey, fetchUrl, updateUrl, jwtToken);
 }
 
+// ! Fetch Vault
 export async function fetchWithAuth(
   url: string,
   options: { headers?: HeadersInit } = {}

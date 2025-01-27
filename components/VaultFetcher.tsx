@@ -24,7 +24,7 @@ export default function VaultFetcher() {
     null
   );
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
 
   // Helper function for authenticated API requests
   const fetchWithAuth = async (url: string) => {
@@ -67,41 +67,60 @@ export default function VaultFetcher() {
     const fetchAndDecryptVault = async () => {
       try {
         setLoading(true);
-        setError(null);
 
+        // Fetch encrypted data from the server
         const data = await fetchWithAuth(
           "https://backend-rspass.let-net.cc/api/v1/sync/fetch"
         );
+        console.log("Raw API response:", data);
 
-        if (!data || !data.encrypted_data) {
-          throw new Error("Invalid data received from API");
+        if (!data || typeof data.encrypted_data !== "string") {
+          throw new Error(
+            "Invalid data format or missing encrypted_data property"
+          );
         }
 
-        const encryptedData = JSON.parse(data.encrypted_data);
+        // Parse encrypted data
+        const encryptedData =
+          typeof data.encrypted_data === "string"
+            ? JSON.parse(data.encrypted_data)
+            : data.encrypted_data;
+
+        console.log("Parsed Encrypted Data:", encryptedData);
 
         if (!encryptedData.iv || !encryptedData.data) {
-          throw new Error("Invalid encrypted data format");
+          throw new Error("Invalid encrypted data format: Missing iv or data");
         }
 
+        // Retrieve stretched master key from session storage
         const stretchedMasterKey = sessionStorage.getItem("stretchedMasterKey");
         if (!stretchedMasterKey) {
           throw new Error("Stretched Master Key not found in sessionStorage");
         }
+        console.log("Retrieved Stretched Master Key:", stretchedMasterKey);
 
-        const decryptedData = await decryptData(
-          JSON.stringify(encryptedData),
-          stretchedMasterKey
-        );
+        // Decrypt the vault data
+        try {
+          const decryptedData = await decryptData(
+            JSON.stringify(encryptedData),
+            stretchedMasterKey
+          );
+          console.log("Decrypted Data:", decryptedData);
 
-        const parsedVault = JSON.parse(decryptedData);
+          // Parse the decrypted JSON data
+          const parsedVault = JSON.parse(decryptedData);
 
-        // Validate decrypted data with Zod
-        const validatedVault = VaultItemSchema.array().parse(parsedVault);
+          // Validate decrypted data with Zod
+          const validatedVault = VaultItemSchema.array().parse(parsedVault);
+          console.log("Validated Vault:", validatedVault);
 
-        setDecryptedVault(validatedVault);
+          setDecryptedVault(validatedVault);
+        } catch (decryptionError) {
+          console.error("Decryption failed:", decryptionError);
+          throw new Error("Failed to decrypt vault data");
+        }
       } catch (err) {
         console.error("Error fetching or decrypting vault:", err);
-        setError(err instanceof Error ? err.message : "Unknown error occurred");
       } finally {
         setLoading(false);
       }
@@ -120,15 +139,6 @@ export default function VaultFetcher() {
           </span>
         </CardContent>
       </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert variant="destructive" className="w-full max-w-3xl mx-auto mt-8">
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
     );
   }
 

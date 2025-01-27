@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // Correct useRouter import for App Router
+import { useRouter } from "next/navigation";
 import { registerUser } from "@/lib/api";
-import { generateMasterKey, generateMasterPasswordHash } from "@/lib/crypto";
+import {
+  generateMasterKey,
+  generateMasterPasswordHash,
+  generateStretchedMasterKey,
+} from "@/lib/crypto";
 import { BellRing, Eye, EyeOff, UserPlus } from "lucide-react";
 import { z } from "zod";
 
@@ -20,52 +24,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RegistrationSchema } from "@/types/auth";
 
 // Password requirements
 const passwordRequirements = [
+  { regex: /.{12,}/, label: "At least 12 characters" },
+  { regex: /[A-Z]/, label: "At least one uppercase letter" },
+  { regex: /\d/, label: "At least one number" },
   {
-    regex: /.{12,}/, // Minimum 12 characters
-    label: "At least 12 characters",
-  },
-  {
-    regex: /[A-Z]/, // At least one uppercase letter
-    label: "At least one uppercase letter",
-  },
-  {
-    regex: /\d/, // At least one number
-    label: "At least one number",
-  },
-  {
-    regex: /[@$!%*?&]/, // At least one special character
+    regex: /[@$!%*?&]/,
     label: "At least one special character (@, $, !, %, *, ?, &)",
   },
 ];
-
-// Zod schema for validation
-const RegistrationSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z
-    .string()
-    .min(12, "Password must be at least 12 characters long")
-    .regex(/[A-Z]/, "Password must include at least one uppercase letter")
-    .regex(/\d/, "Password must include at least one number")
-    .regex(
-      /[@$!%*?&]/,
-      "Password must include at least one special character (@, $, !, %, *, ?, &)"
-    ),
-});
 
 type CardProps = React.ComponentProps<typeof Card>;
 
 export function RegisterCard({ className, ...props }: CardProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter(); // Correctly use useRouter inside the component
+  const router = useRouter();
 
-  // Calculate password strength
   const strength = passwordRequirements.filter((req) =>
     req.regex.test(password)
   ).length;
@@ -76,35 +57,34 @@ export function RegisterCard({ className, ...props }: CardProps) {
     setMessage(null);
 
     try {
-      // Validate the input using Zod
+      // Validate input
       RegistrationSchema.parse({ email, password });
 
+      // Generate keys
       const masterKey = await generateMasterKey(email, password);
+      const stretchedMasterKey = await generateStretchedMasterKey(masterKey);
+      sessionStorage.setItem("stretchedMasterKey", stretchedMasterKey);
+
       const masterPasswordHash = await generateMasterPasswordHash(
         masterKey,
         password
       );
 
-      const payload = {
-        email,
-        password_hash: masterPasswordHash,
-      };
+      // Register the user
+      const payload = { email, password_hash: masterPasswordHash };
+      const response = await registerUser(payload);
 
-      const response = await registerUser(payload); // Register user and get response
       if (response?.token) {
-        // Set token in cookies
-        document.cookie = `token=${response.token}; path=/;`;
-
-        // Redirect to the dashboard
+        document.cookie = `token=${response.token}; path=/; secure`;
         router.push("/dashboard");
       } else {
         throw new Error("Registration successful but no token returned.");
       }
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         setMessage(error.errors.map((err) => err.message).join("\n"));
       } else if (error instanceof Error) {
-        setMessage(`Error: ${error.message}`);
+        setMessage(error.message);
       } else {
         setMessage("An unknown error occurred.");
       }
@@ -138,7 +118,7 @@ export function RegisterCard({ className, ...props }: CardProps) {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"} // Toggle between "text" and "password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -146,13 +126,12 @@ export function RegisterCard({ className, ...props }: CardProps) {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)} // Toggle password visibility
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-2 top-2 h-6 w-6 flex items-center justify-center text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>
               </div>
-              {/* Password Strength Bar */}
               <div className="mt-2">
                 <div className="w-full bg-gray-200 h-2 rounded">
                   <div
